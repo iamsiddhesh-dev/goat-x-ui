@@ -10,17 +10,17 @@ export const countUpStatsSkeleton: SectionSkeletonFn = ({
 }): SectionModule => {
   const duration = Number(params.duration ?? 1.4)
 
-  // Build real stats from copy.items; fall back to a couple of demo figures.
-  const rawItems =
-    copy.items && copy.items.length
-      ? copy.items
+  // Build real stats from the dedicated copy.stats field; fall back to demo figures.
+  const rawStats =
+    copy.stats && copy.stats.length
+      ? copy.stats
       : [
-          { title: '250+', body: 'Active users' },
-          { title: '98%', body: 'Uptime' },
+          { value: '250+', label: 'Active users' },
+          { value: '98%', label: 'Uptime' },
         ]
-  const stats = rawItems.map((it) => ({
-    ...parseStatNumber(it.title),
-    label: it.body ?? '',
+  const stats = rawStats.map((s) => ({
+    ...parseStatNumber(s.value),
+    label: s.label,
   }))
 
   const statHtml = stats

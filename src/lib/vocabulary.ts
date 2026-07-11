@@ -426,8 +426,9 @@ Numbers count up from 0 to their target value, with snap-to-integer rounding, wh
 Clamped params: duration=${p.duration}s.
 
 MECHANICS YOU MUST KEEP:
-- Each stat number lives in its own element (class 'stat-num'), with the FULL
-  target text already parsed into a { prefix, value, suffix } shape (e.g. "$4.2M"
+- Read stats from the copy's \`stats\` array ({value, label} — NOT \`items\`).
+  Each stat number lives in its own element (class 'stat-num'), with its
+  \`value\` string parsed into a { prefix, value, suffix } shape (e.g. "$4.2M"
   → prefix "$", value 4.2, suffix "M"; "250+" → prefix "", value 250, suffix "+").
 - Use a plain proxy object PER stat, never tween the DOM element's text
   directly: var proxy = { val: 0 }; then

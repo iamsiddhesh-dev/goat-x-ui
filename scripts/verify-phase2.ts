@@ -268,7 +268,7 @@ console.log('\nEmitting offline preview (public/phase2-preview.html)')
   const statsMod = skeletonFor('count-up-stats')({
     id: 'stats', kind: 'stats',
     copy: { id: 'stats', headline: 'Numbers that matter',
-      items: [{ title: '250+', body: 'Active users' }, { title: '98%', body: 'Uptime' }, { title: '$4.2M', body: 'Processed' }] },
+      stats: [{ value: '250+', label: 'Active users' }, { value: '98%', label: 'Uptime' }, { value: '$4.2M', label: 'Processed' }] },
     theme, params: clampParams({ intent: 'count-up-stats', params: {} }).params,
   })
   const shiftMod = skeletonFor('theme-shift')({
