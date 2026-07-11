@@ -10,6 +10,7 @@ import { reverseParallaxSkeleton } from './reverse-parallax'
 import { scrubChoreographySkeleton } from './scrub-choreography'
 import { horizontalScrollTrackSkeleton } from './horizontal-scroll-track'
 import { stickyCardStackSkeleton } from './sticky-card-stack'
+import { countUpStatsSkeleton } from './count-up-stats'
 import { pinnedStepSequenceSkeleton } from './pinned-step-sequence'
 import { marqueeLoopSkeleton } from './marquee-loop'
 
@@ -33,6 +34,7 @@ const SKELETONS: Partial<Record<AnimationIntentId, SectionSkeletonFn>> = {
   'scrub-choreography': scrubChoreographySkeleton,
   'horizontal-scroll-track': horizontalScrollTrackSkeleton,
   'sticky-card-stack': stickyCardStackSkeleton,
+  'count-up-stats': countUpStatsSkeleton,
   'pinned-step-sequence': pinnedStepSequenceSkeleton,
   'marquee-loop': marqueeLoopSkeleton,
 }
@@ -53,6 +55,7 @@ export {
   scrubChoreographySkeleton,
   horizontalScrollTrackSkeleton,
   stickyCardStackSkeleton,
+  countUpStatsSkeleton,
   pinnedStepSequenceSkeleton,
   marqueeLoopSkeleton,
 }

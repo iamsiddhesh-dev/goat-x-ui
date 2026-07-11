@@ -51,6 +51,17 @@ export function ctaButton(copy: SectionCopy): string {
     </div>`
 }
 
+/** Split a stat string like "$4.2M" or "250+" into { prefix, value, suffix }. */
+export function parseStatNumber(text: string): {
+  prefix: string
+  value: number
+  suffix: string
+} {
+  const m = text.match(/^([^\d.]*)([\d.]+)(.*)$/)
+  if (!m) return { prefix: '', value: 0, suffix: text }
+  return { prefix: m[1], value: Number(m[2]), suffix: m[3] }
+}
+
 /** Feature/step/logo items → list of `<div class="item">…</div>`. */
 export function itemCards(copy: SectionCopy, extraClass = ''): string {
   if (!copy.items || copy.items.length === 0) return ''

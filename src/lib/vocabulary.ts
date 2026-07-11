@@ -381,6 +381,49 @@ gsap.to(track, {
 });
 \`\`\``,
 
+  'count-up-stats': (p) => `## INTENT: count-up-stats
+Numbers count up from 0 to their target value, with snap-to-integer rounding, when the section enters. Only valid on a "stats" kind section.
+Clamped params: duration=${p.duration}s.
+
+MECHANICS YOU MUST KEEP:
+- Each stat number lives in its own element (class 'stat-num'), with the FULL
+  target text already parsed into a { prefix, value, suffix } shape (e.g. "$4.2M"
+  → prefix "$", value 4.2, suffix "M"; "250+" → prefix "", value 250, suffix "+").
+- Use a plain proxy object PER stat, never tween the DOM element's text
+  directly: var proxy = { val: 0 }; then
+    gsap.to(proxy, { val: value, duration: ${p.duration}, ease: 'power1.out',
+      snap: { val: 1 }, onUpdate: function () { el.textContent = prefix + Math.round(proxy.val) + suffix; } }).
+- ONE ScrollTrigger with once: true driving all stats together, guarded exactly
+  like fade-up-stagger (a stats row can already be on-screen at load):
+    var st = ScrollTrigger.create({ trigger: root, start: 'top 80%', once: true, onEnter: play });
+    if (st.isActive) { st.kill(); play(); }
+- Numbers start already visible at "0" (or "prefix+0+suffix") — no CSS-hidden
+  initial state is needed for this intent (rule C9 doesn't apply; there is
+  nothing to hide).
+
+YOURS TO INVENT:
+- Stat layout/grid, labels beneath each number, decimal precision if the
+  parsed value is non-integer (round only for display, keep proxy precise).
+
+REFERENCE SKELETON — mechanics example ONLY, do not copy the DOM/layout:
+\`\`\`js
+var nums = gsap.utils.toArray(root.querySelectorAll('.stat-num'));
+function play() {
+  nums.forEach(function (el) {
+    var value = Number(el.dataset.value);
+    var prefix = el.dataset.prefix || '';
+    var suffix = el.dataset.suffix || '';
+    var proxy = { val: 0 };
+    gsap.to(proxy, {
+      val: value, duration: ${p.duration}, ease: 'power1.out', snap: { val: 1 },
+      onUpdate: function () { el.textContent = prefix + Math.round(proxy.val) + suffix; }
+    });
+  });
+}
+var st = ScrollTrigger.create({ trigger: root, start: 'top 80%', once: true, onEnter: play });
+if (st.isActive) { st.kill(); play(); }
+\`\`\``,
+
   'sticky-card-stack': (p) => `## INTENT: sticky-card-stack
 ${p.cards} cards stack via native CSS position:sticky (NOT a GSAP pin); each incoming card pushes the previous one back with a scale/fade.
 Clamped params: cards=${p.cards}.
@@ -586,6 +629,7 @@ export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'scrub-choreography',
   'horizontal-scroll-track',
   'sticky-card-stack',
+  'count-up-stats',
   'pinned-step-sequence',
   'marquee-loop',
 ])
