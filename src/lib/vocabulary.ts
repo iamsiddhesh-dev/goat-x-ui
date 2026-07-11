@@ -381,6 +381,41 @@ gsap.to(track, {
 });
 \`\`\``,
 
+  'sticky-card-stack': (p) => `## INTENT: sticky-card-stack
+${p.cards} cards stack via native CSS position:sticky (NOT a GSAP pin); each incoming card pushes the previous one back with a scale/fade.
+Clamped params: cards=${p.cards}.
+
+MECHANICS YOU MUST KEEP:
+- Each card lives in its own tall wrapper (e.g. class 'card-wrap', min-height:
+  100vh) so scrolling through the section gives each card a runway. The card
+  itself is 'position: sticky; top: <some %>' — this is the ONLY intent allowed
+  to use position:sticky (rule C7 exception).
+- NEVER use a GSAP pin (\`pin:\`) here — sticky positioning does the pinning
+  natively. Using pin would violate rule C4 for this intent.
+- For each card except the last, ONE scrubbed ScrollTrigger keyed to the NEXT
+  card's wrapper entering, scaling/fading the current card back:
+    gsap.to(cards[i], { scale: 0.9, autoAlpha: 0.6, ease: 'none',
+      scrollTrigger: { trigger: wraps[i+1], start: 'top bottom', end: 'top top', scrub: true } }).
+  transform (scale) + opacity only.
+
+YOURS TO INVENT:
+- Card content/styling, the exact scale-back amount, sticky top offset, any
+  index/counter UI. Content must be readable with JS off (cards just stack in
+  normal document flow, sticky alone still reads fine).
+
+REFERENCE SKELETON — mechanics example ONLY, do not copy the DOM/layout:
+\`\`\`js
+var wraps = gsap.utils.toArray(root.querySelectorAll('.card-wrap'));
+var cards = wraps.map(function (w) { return w.querySelector('.card'); });
+cards.forEach(function (card, i) {
+  if (i === cards.length - 1) return;
+  gsap.to(card, {
+    scale: 0.9, autoAlpha: 0.6, ease: 'none',
+    scrollTrigger: { trigger: wraps[i + 1], start: 'top bottom', end: 'top top', scrub: true }
+  });
+});
+\`\`\``,
+
   'reverse-parallax': (p) => `## INTENT: reverse-parallax
 Media drifts AGAINST the direction parallax-drift would use, while the text flows normally (no scroll-linked transform on text at all).
 Clamped params: intensity=${p.intensity}.
@@ -550,6 +585,7 @@ export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'reverse-parallax',
   'scrub-choreography',
   'horizontal-scroll-track',
+  'sticky-card-stack',
   'pinned-step-sequence',
   'marquee-loop',
 ])

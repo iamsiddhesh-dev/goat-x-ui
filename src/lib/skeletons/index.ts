@@ -9,6 +9,7 @@ import { parallaxDriftSkeleton } from './parallax-drift'
 import { reverseParallaxSkeleton } from './reverse-parallax'
 import { scrubChoreographySkeleton } from './scrub-choreography'
 import { horizontalScrollTrackSkeleton } from './horizontal-scroll-track'
+import { stickyCardStackSkeleton } from './sticky-card-stack'
 import { pinnedStepSequenceSkeleton } from './pinned-step-sequence'
 import { marqueeLoopSkeleton } from './marquee-loop'
 
@@ -31,6 +32,7 @@ const SKELETONS: Partial<Record<AnimationIntentId, SectionSkeletonFn>> = {
   'reverse-parallax': reverseParallaxSkeleton,
   'scrub-choreography': scrubChoreographySkeleton,
   'horizontal-scroll-track': horizontalScrollTrackSkeleton,
+  'sticky-card-stack': stickyCardStackSkeleton,
   'pinned-step-sequence': pinnedStepSequenceSkeleton,
   'marquee-loop': marqueeLoopSkeleton,
 }
@@ -50,6 +52,7 @@ export {
   reverseParallaxSkeleton,
   scrubChoreographySkeleton,
   horizontalScrollTrackSkeleton,
+  stickyCardStackSkeleton,
   pinnedStepSequenceSkeleton,
   marqueeLoopSkeleton,
 }
