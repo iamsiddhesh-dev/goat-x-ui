@@ -8,6 +8,7 @@ import { scaleSettleSkeleton } from './scale-settle'
 import { parallaxDriftSkeleton } from './parallax-drift'
 import { reverseParallaxSkeleton } from './reverse-parallax'
 import { scrubChoreographySkeleton } from './scrub-choreography'
+import { horizontalScrollTrackSkeleton } from './horizontal-scroll-track'
 import { pinnedStepSequenceSkeleton } from './pinned-step-sequence'
 import { marqueeLoopSkeleton } from './marquee-loop'
 
@@ -29,6 +30,7 @@ const SKELETONS: Partial<Record<AnimationIntentId, SectionSkeletonFn>> = {
   'parallax-drift': parallaxDriftSkeleton,
   'reverse-parallax': reverseParallaxSkeleton,
   'scrub-choreography': scrubChoreographySkeleton,
+  'horizontal-scroll-track': horizontalScrollTrackSkeleton,
   'pinned-step-sequence': pinnedStepSequenceSkeleton,
   'marquee-loop': marqueeLoopSkeleton,
 }
@@ -47,6 +49,7 @@ export {
   parallaxDriftSkeleton,
   reverseParallaxSkeleton,
   scrubChoreographySkeleton,
+  horizontalScrollTrackSkeleton,
   pinnedStepSequenceSkeleton,
   marqueeLoopSkeleton,
 }

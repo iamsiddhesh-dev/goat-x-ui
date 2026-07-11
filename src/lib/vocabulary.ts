@@ -351,6 +351,36 @@ tl.to(media, { yPercent: -20, rotate: 6, ease: 'none' }, 0)
   .to(copy, { yPercent: 12, ease: 'none' }, 0);
 \`\`\``,
 
+  'horizontal-scroll-track': (p) => `## INTENT: horizontal-scroll-track
+Section pins to the viewport; an inner track of ${p.panels} panels translates horizontally as the user scrolls vertically.
+Clamped params: panels=${p.panels} (scrub fixed at 1).
+
+MECHANICS YOU MUST KEEP (load-bearing ScrollTrigger shape):
+- ONE ScrollTrigger: { trigger: root, pin: root, scrub: 1, anticipatePin: 1,
+  start: 'top top', end: '+=' + (${p.panels} * 100) + '%' }.
+- The track is a flex row of exactly ${p.panels} full-width panels. The
+  horizontal layout must be opted into from JS (add a class to the track in
+  JS), so with JS off the panels flow as a readable vertical list.
+- ONE tween drives the whole track: gsap.to(track, { xPercent: -(100 * (${p.panels} - 1) / ${p.panels}),
+  ease: 'none', scrollTrigger: {...} }) — the track is ${p.panels}x root width, so
+  the xPercent (relative to the TRACK's own width) must be scaled by panel count,
+  not a flat -100 per panel. xPercent only — never left/width.
+
+YOURS TO INVENT (do not copy the reference layout):
+- What a "panel" is for THIS content, panel styling, any progress indicator
+  (dots, counter) — as long as it doesn't add a second ScrollTrigger or pin.
+
+REFERENCE SKELETON — mechanics example ONLY, copying its DOM/layout is a failure:
+\`\`\`js
+var track = root.querySelector('.track');
+track.classList.add('is-animated');
+gsap.to(track, {
+  xPercent: -(100 * (${p.panels} - 1) / ${p.panels}), ease: 'none',
+  scrollTrigger: { trigger: root, pin: root, scrub: 1, anticipatePin: 1,
+    start: 'top top', end: '+=' + (${p.panels} * 100) + '%' }
+});
+\`\`\``,
+
   'reverse-parallax': (p) => `## INTENT: reverse-parallax
 Media drifts AGAINST the direction parallax-drift would use, while the text flows normally (no scroll-linked transform on text at all).
 Clamped params: intensity=${p.intensity}.
@@ -519,6 +549,7 @@ export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'parallax-drift',
   'reverse-parallax',
   'scrub-choreography',
+  'horizontal-scroll-track',
   'pinned-step-sequence',
   'marquee-loop',
 ])
