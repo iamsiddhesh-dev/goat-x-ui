@@ -7,6 +7,7 @@ import { maskWipeSkeleton } from './mask-wipe'
 import { scaleSettleSkeleton } from './scale-settle'
 import { parallaxDriftSkeleton } from './parallax-drift'
 import { reverseParallaxSkeleton } from './reverse-parallax'
+import { scrubChoreographySkeleton } from './scrub-choreography'
 import { pinnedStepSequenceSkeleton } from './pinned-step-sequence'
 import { marqueeLoopSkeleton } from './marquee-loop'
 
@@ -27,6 +28,7 @@ const SKELETONS: Partial<Record<AnimationIntentId, SectionSkeletonFn>> = {
   'scale-settle': scaleSettleSkeleton,
   'parallax-drift': parallaxDriftSkeleton,
   'reverse-parallax': reverseParallaxSkeleton,
+  'scrub-choreography': scrubChoreographySkeleton,
   'pinned-step-sequence': pinnedStepSequenceSkeleton,
   'marquee-loop': marqueeLoopSkeleton,
 }
@@ -44,6 +46,7 @@ export {
   scaleSettleSkeleton,
   parallaxDriftSkeleton,
   reverseParallaxSkeleton,
+  scrubChoreographySkeleton,
   pinnedStepSequenceSkeleton,
   marqueeLoopSkeleton,
 }

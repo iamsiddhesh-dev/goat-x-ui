@@ -321,6 +321,36 @@ layers.forEach(function (el, i) {
 });
 \`\`\``,
 
+  'scrub-choreography': (p) => `## INTENT: scrub-choreography
+A free-form timeline of transform/opacity tweens scrubbed across the section's viewport transit. The most open intent — invent the choreography.
+Clamped params: smoothing=${p.smoothing} (the ScrollTrigger \`scrub\` value).
+
+MECHANICS YOU MUST KEEP:
+- ONE gsap.timeline() with ONE ScrollTrigger driving the whole section:
+    scrollTrigger: { trigger: root, start: 'top bottom', end: 'bottom top', scrub: ${p.smoothing} }.
+- Every tween on the timeline uses ease: 'none' (scrub already supplies the
+  easing via scroll position) and animates transform/opacity/clipPath ONLY —
+  never width/height/top/left/margin/padding/fontSize (rule C2).
+- Never pin — this intent scrubs, it does not pin (that's pinned-step-sequence's
+  job). At least two elements should move on the timeline, or it reads as a
+  weaker parallax-drift.
+
+YOURS TO INVENT:
+- The entire choreography: what moves, in what order, whether elements
+  counter-move, rotate, or scale against each other. This is the one intent
+  with no fixed shape beyond "one scrubbed timeline, transform/opacity only."
+
+REFERENCE SKELETON — mechanics example ONLY, do not copy the DOM/layout:
+\`\`\`js
+var media = root.querySelector('.media');
+var copy = root.querySelector('.copy');
+var tl = gsap.timeline({
+  scrollTrigger: { trigger: root, start: 'top bottom', end: 'bottom top', scrub: ${p.smoothing} }
+});
+tl.to(media, { yPercent: -20, rotate: 6, ease: 'none' }, 0)
+  .to(copy, { yPercent: 12, ease: 'none' }, 0);
+\`\`\``,
+
   'reverse-parallax': (p) => `## INTENT: reverse-parallax
 Media drifts AGAINST the direction parallax-drift would use, while the text flows normally (no scroll-linked transform on text at all).
 Clamped params: intensity=${p.intensity}.
@@ -488,6 +518,7 @@ export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'scale-settle',
   'parallax-drift',
   'reverse-parallax',
+  'scrub-choreography',
   'pinned-step-sequence',
   'marquee-loop',
 ])
