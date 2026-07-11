@@ -122,7 +122,9 @@ export async function runSectionCodegen(
       module: repaired.module,
       warnings: [
         ...warnings,
-        `section "${section.id}": repaired after ${first.errors.length} validator error(s)`,
+        `section "${section.id}": repaired after ${first.errors.length} validator error(s) (${first.errors
+          .slice(0, 3)
+          .join('; ')})`,
       ],
     }
   }

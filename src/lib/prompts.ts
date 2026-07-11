@@ -63,6 +63,9 @@ ${card}
 2. FORBIDDEN anywhere in JS: document. window. parent. fetch( import eval(
    setTimeout( setInterval( localStorage innerHTML Lenis ScrollTrigger.refresh
    ScrollTrigger.scrollerProxy gsap.registerPlugin
+   Common mistake: reaching for \`document.querySelector(...)\` out of habit.
+   ALWAYS use \`root.querySelector(...)\` / \`root.querySelectorAll(...)\` instead —
+   never \`document.\` anywhere, even inside a callback.
 3. Animate ONLY transforms (x, y, xPercent, yPercent, scale, rotate, skewX),
    opacity/autoAlpha, clipPath. Never width/height/top/left/margin/fontSize.
 4. Eases: power1-4 .out/.inOut, expo.out, sine.out/.inOut, back.out(1.2-2), none.
@@ -77,11 +80,19 @@ ${card}
    is essential: https://picsum.photos/seed/${section.id}/1200/800
 7. CSS: prefix every rule with .s-${section.id}. Use the CSS variables for ALL
    colors/fonts. No position:fixed. Desktop-first, must not break at 375px
-   (stack columns with a media query).
+   (stack columns with a media query). position:sticky is ONLY allowed when
+   your intent above is sticky-card-stack — this section's intent is
+   "${section.animation.intent}", so ${
+     section.animation.intent === 'sticky-card-stack'
+       ? 'position:sticky IS allowed here.'
+       : 'do NOT use position:sticky anywhere in this section.'
+   }
 8. CSS must NOT hide anything (no opacity:0 / visibility:hidden). ALL initial
    hidden/offset states are set in JS via gsap.set() at the top of your function
    — the page must be fully readable if your JS never runs.
-9. Budget: HTML <= 120 lines, CSS <= 120 lines, JS <= 80 lines.
+9. Budget: HTML <= 120 lines, CSS <= 120 lines, JS <= 80 lines — these are hard
+   caps enforced by the linter, so aim comfortably under them (~80/90/50) rather
+   than writing right up to the limit.
 
 == OUTPUT FORMAT (exactly this, no commentary, no markdown fences) ==
 ===HTML===
