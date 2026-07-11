@@ -2,7 +2,7 @@ import type { z } from 'zod'
 
 /* ============================================================================
  * Shared JSON gate for JSON-mode LLM stages (Planner, Copywriter) — AGENT_SPEC
- * §6 F1/F2. Groq JSON mode makes malformed output rare, but the gate still
+ * §6 F1/F2. The provider's JSON mode makes malformed output rare, but the gate still
  * strips markdown fences / leading-trailing prose (F1) before parsing, then
  * runs the stage's Zod schema (F2). Never throws.
  * ========================================================================== */

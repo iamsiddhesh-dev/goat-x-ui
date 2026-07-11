@@ -1,4 +1,4 @@
-import type { ChatFn } from './groq'
+import type { ChatFn } from './llm'
 import { CopyDoc, type PageBlueprint, type SectionCopy, type SectionPlan } from './schema'
 import { buildCopywriterPrompt, buildRepairPrompt } from './prompts'
 import { parseAndValidateJson } from './llm-json'

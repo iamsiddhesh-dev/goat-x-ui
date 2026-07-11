@@ -1,4 +1,4 @@
-import type { ChatFn } from './groq'
+import type { ChatFn } from './llm'
 import type {
   SectionCopy,
   SectionKind,
@@ -16,7 +16,7 @@ import { skeletonFor } from './skeletons'
  *
  * Pure and LLM-agnostic: the ChatFn is injected, so the whole
  * codegen → validate → (1×) repair → deterministic fallback path is exercised
- * by tests with a mock, no live Groq key required.
+ * by tests with a mock, no live API key required.
  *
  * Doctrine (§6): max ONE repair per section; a second failure lands on the
  * fallback skeleton (origin: 'fallback'); the section NEVER hard-fails the page.
@@ -81,7 +81,7 @@ export async function runSectionCodegen(
       maxTokens: CODEGEN_MAX_TOKENS,
     })
   } catch (e) {
-    // F13: Groq error/timeout with no output to repair → straight to fallback.
+    // F13: API error/timeout with no output to repair → straight to fallback.
     return buildSkeleton(
       `section "${section.id}": codegen call failed (${errMsg(e)}) — using fallback skeleton`,
     )

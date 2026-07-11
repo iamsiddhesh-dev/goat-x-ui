@@ -4,17 +4,17 @@ import { clampParams } from '../src/lib/vocabulary'
 import { skeletonFor } from '../src/lib/skeletons'
 import { extractBlocks, validateModule, validateParts } from '../src/lib/validate'
 import { runSectionCodegen, type GenerateSectionInput } from '../src/lib/codegen'
-import type { ChatFn } from '../src/lib/groq'
+import type { ChatFn } from '../src/lib/llm'
 import { assemble } from '../src/lib/assemble'
 
 /* ============================================================================
  * Phase 2 verification (AGENT_SPEC §8, Phase 2 exit criteria), deterministic —
- * NO live Groq key. Proves:
+ * NO live API key. Proves:
  *   1. every fallback skeleton passes the validator (lint-clean by construction)
  *   2. a good codegen output validates → module (origin 'generated')
  *   3. a lint-violating output is caught with SPECIFIC errors → repair → pass
  *   4. a double failure lands on the fallback skeleton (origin 'fallback')
- *   5. a Groq call error lands on the fallback skeleton
+ *   5. an LLM call error lands on the fallback skeleton
  *   6. clampParams clamps out-of-range params + drops unknowns (+warnings)
  * It also emits an offline, vendored preview (public/phase2-preview.html) of
  * generated + skeleton sections in the Phase-1 harness for a manual browser pass.
@@ -197,7 +197,7 @@ await (async () => {
   check('fallback module is itself lint-clean', fbErrs.length === 0, fbErrs.join(' | '))
 
   const err = await runSectionCodegen(input, throwingChat)
-  check('groq error → origin fallback', err.module.origin === 'fallback')
+  check('LLM call error → origin fallback', err.module.origin === 'fallback')
 })()
 
 /* -------------------------------------------------------------------------- */

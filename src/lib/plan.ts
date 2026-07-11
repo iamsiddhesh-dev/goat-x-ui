@@ -1,4 +1,4 @@
-import type { ChatFn } from './groq'
+import type { ChatFn } from './llm'
 import { PageBlueprint } from './schema'
 import { buildPlannerPrompt, buildRepairPrompt } from './prompts'
 import { parseAndValidateJson } from './llm-json'
@@ -12,7 +12,7 @@ import {
  * Planner orchestration (AGENT_SPEC §1.1 stage 1, §6, §8 Phase 3).
  *
  * Pure and LLM-agnostic: the ChatFn is injected so parse → repair → gate is
- * exercised by tests with a mock, no live Groq key required.
+ * exercised by tests with a mock, no live API key required.
  *
  * Doctrine (§6): parse (F1) → Zod (F2) → 1 repair call on failure → clamp
  * params (F3) → composition rules R1–R7 auto-correct → unique-id dedupe.

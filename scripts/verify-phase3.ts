@@ -1,11 +1,11 @@
 import type { PageBlueprint } from '../src/lib/schema'
 import { runPlanner } from '../src/lib/plan'
 import { runCopywriter } from '../src/lib/write-copy'
-import type { ChatFn } from '../src/lib/groq'
+import type { ChatFn } from '../src/lib/llm'
 
 /* ============================================================================
  * Phase 3 verification (AGENT_SPEC §8, Phase 3 exit criteria), deterministic —
- * NO live Groq key required. Proves:
+ * NO live API key required. Proves:
  *   1. a clean Planner JSON response parses straight through
  *   2. malformed JSON (prose-wrapped) is repaired
  *   3. an invalid shape (bad enum) is repaired

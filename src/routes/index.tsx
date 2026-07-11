@@ -1,72 +1,47 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { assemble } from '../lib/assemble'
+import { useCallback, useState } from 'react'
 import { Preview, type GoatxEvent } from '../components/Preview'
-import {
-  baseSections,
-  meta,
-  theme,
-  withBrokenSection,
-} from '../fixtures/phase1'
+import { usePipeline } from '../hooks/usePipeline'
+import type { StageStatus } from '../lib/pipeline'
 
 export const Route = createFileRoute('/')({
-  component: Phase1Harness,
+  component: Generator,
 })
 
-interface LogEntry {
-  at: number
-  event: GoatxEvent
-}
-
-function Phase1Harness() {
-  const [reducedMotion, setReducedMotion] = useState(false)
-  const [injectBroken, setInjectBroken] = useState(false)
-  const [log, setLog] = useState<LogEntry[]>([])
-
-  const sections = injectBroken ? withBrokenSection : baseSections
-
-  const html = useMemo(
-    () =>
-      assemble(
-        { meta, theme, sections },
-        { forceReducedMotion: reducedMotion },
-      ),
-    [sections, reducedMotion],
-  )
-
-  // Wholesale teardown on any config change: new key => fresh iframe + srcdoc.
-  const previewKey = `${injectBroken ? 'broken' : 'base'}-${reducedMotion ? 'rm' : 'motion'}`
-
-  // Clear the event log whenever we swap the document.
-  useEffect(() => {
-    setLog([])
-  }, [previewKey])
+function Generator() {
+  const [prompt, setPrompt] = useState('')
+  const { state, generate, regenerateSection } = usePipeline()
+  const [events, setEvents] = useState<GoatxEvent[]>([])
 
   const onEvent = useCallback((event: GoatxEvent) => {
-    setLog((prev) => [...prev, { at: Date.now(), event }])
+    setEvents((prev) => [...prev, event])
   }, [])
 
+  const onGenerate = useCallback(() => {
+    if (!prompt.trim() || state.isRunning) return
+    setEvents([])
+    void generate(prompt.trim())
+  }, [prompt, state.isRunning, generate])
+
+  const bundle = state.bundle
+  const sectionIds = state.sectionIds
+
   const download = useCallback(() => {
-    const blob = new Blob([html], { type: 'text/html' })
+    if (!bundle) return
+    const blob = new Blob([bundle.html], { type: 'text/html' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = 'landing.html'
     a.click()
     URL.revokeObjectURL(url)
-  }, [html])
-
-  const readyCount = log.find((l) => l.event.type === 'sections-ready')?.event
-    .count
-  const errorEvents = log.filter(
-    (l) => l.event.type === 'section-error' || l.event.type === 'page-error',
-  )
+  }, [bundle])
 
   return (
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: '360px 1fr',
+        gridTemplateColumns: '380px 1fr',
         height: '100vh',
         width: '100vw',
       }}
@@ -85,43 +60,111 @@ function Phase1Harness() {
         <header>
           <h1 style={{ fontSize: 18, margin: 0 }}>GOAT-X-UI</h1>
           <p style={{ color: 'var(--app-muted)', margin: '4px 0 0' }}>
-            Phase 1 — runtime harness verification
+            Describe a landing page. The agent plans, writes copy, and
+            generates each section's animation in parallel.
           </p>
         </header>
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <SectionTitle>Controls</SectionTitle>
-          <Toggle
-            label="Emulate prefers-reduced-motion"
-            hint="Skips all section init — page must stay fully readable & static"
-            checked={reducedMotion}
-            onChange={setReducedMotion}
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="e.g. landing page for a monospace font foundry, dark and nerdy"
+            rows={4}
+            style={{
+              background: 'var(--app-panel)',
+              color: 'var(--app-text)',
+              border: '1px solid var(--app-border)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              resize: 'vertical',
+              font: 'inherit',
+            }}
           />
-          <Toggle
-            label="Inject a throwing section"
-            hint="Its init throws — harness must isolate it and report a section-error"
-            checked={injectBroken}
-            onChange={setInjectBroken}
-          />
-          <button onClick={download} style={btnStyle}>
-            Download landing.html
+          <button
+            onClick={onGenerate}
+            disabled={!prompt.trim() || state.isRunning}
+            style={{
+              ...btnStyle,
+              opacity: !prompt.trim() || state.isRunning ? 0.5 : 1,
+              cursor:
+                !prompt.trim() || state.isRunning ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {state.isRunning ? 'Generating…' : 'Generate'}
           </button>
+          {bundle ? (
+            <button onClick={download} style={btnStyle}>
+              Download landing.html
+            </button>
+          ) : null}
         </section>
 
+        {state.error ? (
+          <section
+            style={{
+              border: '1px solid var(--app-bad)',
+              borderRadius: 8,
+              padding: 10,
+              color: 'var(--app-bad)',
+              fontSize: 13,
+            }}
+          >
+            {state.error}
+          </section>
+        ) : null}
+
         <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <SectionTitle>Harness bridge</SectionTitle>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Badge tone={readyCount != null ? 'good' : 'idle'}>
-              {readyCount != null
-                ? `sections-ready · ${readyCount}`
-                : 'waiting…'}
-            </Badge>
-            <Badge tone={errorEvents.length ? 'bad' : 'idle'}>
-              {errorEvents.length} error
-              {errorEvents.length === 1 ? '' : 's'}
-            </Badge>
-          </div>
+          <SectionTitle>Progress</SectionTitle>
+          <StageRow label="Planning" status={state.planner} />
+          <StageRow label="Writing copy" status={state.copywriter} />
+          {sectionIds.map((id) => (
+            <StageRow
+              key={id}
+              label={id}
+              status={state.sections[id] ?? 'idle'}
+              indent
+              origin={state.sectionOrigin[id]}
+              onRegenerate={
+                bundle && state.sections[id] !== 'running'
+                  ? () => void regenerateSection(id)
+                  : undefined
+              }
+            />
+          ))}
         </section>
+
+        {bundle && bundle.warnings.length > 0 ? (
+          <section
+            style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+          >
+            <SectionTitle>Warnings ({bundle.warnings.length})</SectionTitle>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+                maxHeight: 160,
+                overflowY: 'auto',
+              }}
+            >
+              {bundle.warnings.map((w, i) => (
+                <span
+                  key={i}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--app-muted)',
+                    border: '1px solid var(--app-border)',
+                    borderRadius: 6,
+                    padding: '4px 8px',
+                  }}
+                >
+                  {w}
+                </span>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section
           style={{
@@ -131,7 +174,7 @@ function Phase1Harness() {
             minHeight: 0,
           }}
         >
-          <SectionTitle>Event log</SectionTitle>
+          <SectionTitle>Harness bridge</SectionTitle>
           <div
             style={{
               flex: 1,
@@ -143,45 +186,56 @@ function Phase1Harness() {
               fontFamily:
                 'ui-monospace, "Cascadia Code", Menlo, Consolas, monospace',
               fontSize: 12,
+              maxHeight: 140,
             }}
           >
-            {log.length === 0 ? (
+            {events.length === 0 ? (
               <span style={{ color: 'var(--app-muted)' }}>
                 No messages yet.
               </span>
             ) : (
-              log.map((l, i) => (
+              events.map((e, i) => (
                 <div key={i} style={{ marginBottom: 4 }}>
-                  <span style={{ color: eventColor(l.event.type) }}>
-                    {l.event.type}
+                  <span
+                    style={{
+                      color:
+                        e.type === 'sections-ready'
+                          ? 'var(--app-good)'
+                          : e.type === 'section-error' ||
+                              e.type === 'page-error'
+                            ? 'var(--app-bad)'
+                            : 'var(--app-text)',
+                    }}
+                  >
+                    {e.type}
                   </span>
-                  {l.event.id ? (
-                    <span style={{ color: 'var(--app-muted)' }}>
-                      {' '}
-                      · {l.event.id}
-                    </span>
-                  ) : null}
-                  {l.event.message ? (
-                    <div style={{ color: 'var(--app-muted)', paddingLeft: 8 }}>
-                      {l.event.message}
-                    </div>
+                  {e.id ? (
+                    <span style={{ color: 'var(--app-muted)' }}> · {e.id}</span>
                   ) : null}
                 </div>
               ))
             )}
           </div>
         </section>
-
-        <p style={{ color: 'var(--app-muted)', fontSize: 12, margin: 0 }}>
-          Scroll the preview: hero staggers in, the showcase pins and hands off
-          its steps. Toggle reduced-motion to see the static fallback; inject the
-          broken section to watch the error bridge fire.
-        </p>
       </aside>
 
       {/* -------- preview -------- */}
       <main style={{ minWidth: 0 }}>
-        <Preview key={previewKey} html={html} onEvent={onEvent} />
+        {bundle ? (
+          <Preview key={bundle.html.length} html={bundle.html} onEvent={onEvent} />
+        ) : (
+          <div
+            style={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--app-muted)',
+            }}
+          >
+            {state.isRunning ? 'Generating your page…' : 'Enter a prompt to begin.'}
+          </div>
+        )}
       </main>
     </div>
   )
@@ -214,80 +268,81 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Toggle({
+function StageRow({
   label,
-  hint,
-  checked,
-  onChange,
+  status,
+  indent,
+  origin,
+  onRegenerate,
 }: {
   label: string
-  hint?: string
-  checked: boolean
-  onChange: (v: boolean) => void
+  status: StageStatus
+  indent?: boolean
+  origin?: string
+  onRegenerate?: () => void
 }) {
+  const color =
+    status === 'done'
+      ? 'var(--app-good)'
+      : status === 'error'
+        ? 'var(--app-bad)'
+        : status === 'running'
+          ? 'var(--app-accent, #d9a441)'
+          : 'var(--app-muted)'
+  const symbol =
+    status === 'done'
+      ? '✓'
+      : status === 'error'
+        ? '✕'
+        : status === 'running'
+          ? '…'
+          : '·'
   return (
-    <label
+    <div
       style={{
         display: 'flex',
-        gap: 10,
-        alignItems: 'flex-start',
-        cursor: 'pointer',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8,
+        paddingLeft: indent ? 12 : 0,
+        fontSize: 13,
       }}
     >
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        style={{ marginTop: 3 }}
-      />
-      <span>
-        <span style={{ display: 'block' }}>{label}</span>
-        {hint ? (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ color, width: 14, display: 'inline-block' }}>
+          {symbol}
+        </span>
+        <span>{label}</span>
+        {origin && origin !== 'generated' ? (
           <span
             style={{
-              display: 'block',
-              color: 'var(--app-muted)',
-              fontSize: 12,
+              fontSize: 10,
+              color: origin === 'fallback' ? 'var(--app-bad)' : 'var(--app-muted)',
+              border: '1px solid var(--app-border)',
+              borderRadius: 999,
+              padding: '0 6px',
             }}
           >
-            {hint}
+            {origin}
           </span>
         ) : null}
       </span>
-    </label>
+      {onRegenerate ? (
+        <button
+          onClick={onRegenerate}
+          style={{
+            background: 'transparent',
+            color: 'var(--app-muted)',
+            border: '1px solid var(--app-border)',
+            borderRadius: 6,
+            padding: '2px 8px',
+            fontSize: 11,
+            cursor: 'pointer',
+          }}
+        >
+          regenerate
+        </button>
+      ) : null}
+    </div>
   )
-}
-
-function Badge({
-  children,
-  tone,
-}: {
-  children: React.ReactNode
-  tone: 'good' | 'bad' | 'idle'
-}) {
-  const color =
-    tone === 'good'
-      ? 'var(--app-good)'
-      : tone === 'bad'
-        ? 'var(--app-bad)'
-        : 'var(--app-muted)'
-  return (
-    <span
-      style={{
-        border: `1px solid ${color}`,
-        color,
-        borderRadius: 999,
-        padding: '2px 10px',
-        fontSize: 12,
-      }}
-    >
-      {children}
-    </span>
-  )
-}
-
-function eventColor(type: string): string {
-  if (type === 'sections-ready') return 'var(--app-good)'
-  if (type === 'section-error' || type === 'page-error') return 'var(--app-bad)'
-  return 'var(--app-text)'
 }

@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { chat } from '../lib/groq'
+import { chat } from '../lib/gemini'
 import { runCopywriter } from '../lib/write-copy'
 import { PageBlueprint } from '../lib/schema'
 
