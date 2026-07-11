@@ -11,6 +11,7 @@ import { scrubChoreographySkeleton } from './scrub-choreography'
 import { horizontalScrollTrackSkeleton } from './horizontal-scroll-track'
 import { stickyCardStackSkeleton } from './sticky-card-stack'
 import { countUpStatsSkeleton } from './count-up-stats'
+import { themeShiftSkeleton } from './theme-shift'
 import { pinnedStepSequenceSkeleton } from './pinned-step-sequence'
 import { marqueeLoopSkeleton } from './marquee-loop'
 
@@ -35,6 +36,7 @@ const SKELETONS: Partial<Record<AnimationIntentId, SectionSkeletonFn>> = {
   'horizontal-scroll-track': horizontalScrollTrackSkeleton,
   'sticky-card-stack': stickyCardStackSkeleton,
   'count-up-stats': countUpStatsSkeleton,
+  'theme-shift': themeShiftSkeleton,
   'pinned-step-sequence': pinnedStepSequenceSkeleton,
   'marquee-loop': marqueeLoopSkeleton,
 }
@@ -56,6 +58,7 @@ export {
   horizontalScrollTrackSkeleton,
   stickyCardStackSkeleton,
   countUpStatsSkeleton,
+  themeShiftSkeleton,
   pinnedStepSequenceSkeleton,
   marqueeLoopSkeleton,
 }

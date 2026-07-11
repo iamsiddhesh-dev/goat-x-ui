@@ -21,11 +21,9 @@ import type {
  * contract cards injected into the codegen prompt (§4.5), and the mapping to the
  * deterministic fallback skeletons (skeletons/). It is pure and LLM-free.
  *
- * Phase 2 fully implemented 6 intents (none, fade-up-stagger, split-text-reveal,
- * parallax-drift, pinned-step-sequence, marquee-loop); Phase 5 is filling in the
- * remaining 8 one at a time (mask-wipe done). All 14 have param specs (so
- * clampParams is TOTAL over all 14); unimplemented ones degrade to a generic
- * entrance card + skeleton until their dedicated cards/skeletons land.
+ * All 14 intents have param specs (clampParams is TOTAL over all 14) and a
+ * dedicated contract card + fallback skeleton (skeletons/). GENERIC_CARD below
+ * remains as a defensive fallback only — it should never be reached.
  * ========================================================================== */
 
 /* ---------- param specs ---------- */
@@ -233,6 +231,14 @@ export function maskWipeHiddenInset(direction: string): string {
   return 'inset(0% 0% 100% 0%)' // up (default)
 }
 
+/** A JS expression resolving a theme-shift `bg` param to a concrete color at runtime. */
+export function themeShiftTargetExpr(bg: string): string {
+  if (bg === 'accent' || bg === 'surface') {
+    return `getComputedStyle(root).getPropertyValue('--${bg}').trim()`
+  }
+  return `'${bg}'` // already-validated hex
+}
+
 const CARDS: Partial<Record<AnimationIntentId, ContractCard>> = {
   none: () => `## INTENT: none
 This section is static — NO JavaScript animation.
@@ -378,6 +384,40 @@ gsap.to(track, {
   xPercent: -(100 * (${p.panels} - 1) / ${p.panels}), ease: 'none',
   scrollTrigger: { trigger: root, pin: root, scrub: 1, anticipatePin: 1,
     start: 'top top', end: '+=' + (${p.panels} * 100) + '%' }
+});
+\`\`\``,
+
+  'theme-shift': (p) => `## INTENT: theme-shift
+This section's own background crossfades to a different theme color while it is in view, and reverses when the user scrolls back up past it (a toggle, not a one-shot reveal).
+Clamped params: bg=${p.bg}.
+
+MECHANICS YOU MUST KEEP:
+- The section (root) itself must be visually full-bleed (e.g. min-height:
+  100vh) so the crossfade reads as a page-background shift, not a small patch.
+- Resolve the target color at runtime — never hardcode a literal unless bg is
+  already a hex — via: ${themeShiftTargetExpr(String(p.bg))}.
+- ONE gsap.to on root's backgroundColor, with toggleActions so it plays
+  forward on enter, STAYS shifted while scrolling on past it, and only
+  REVERSES specifically on leave-back — scrolling back up past the top edge
+  (this is the one exception to "once: true" — theme-shift must be
+  reversible, but only in that one direction):
+    gsap.to(root, { backgroundColor: target, duration: 0.6, ease: 'power2.inOut',
+      scrollTrigger: { trigger: root, start: 'top center', end: 'bottom center',
+        toggleActions: 'play none none reverse' } }).
+- backgroundColor is the ONLY non-transform/opacity property this intent may
+  animate (rule C2's explicit theme-shift exception). Never top/left/width/height.
+
+YOURS TO INVENT:
+- The section's own content/layout on top of the shifting background. Ensure
+  text stays legible against both the start and end background colors.
+
+REFERENCE SKELETON — mechanics example ONLY, do not copy the DOM/layout:
+\`\`\`js
+var target = ${themeShiftTargetExpr(String(p.bg))};
+gsap.to(root, {
+  backgroundColor: target, duration: 0.6, ease: 'power2.inOut',
+  scrollTrigger: { trigger: root, start: 'top center', end: 'bottom center',
+    toggleActions: 'play none none reverse' }
 });
 \`\`\``,
 
@@ -617,7 +657,7 @@ export function contractCardFor(
   return card(params)
 }
 
-/** Whether Phase 2 ships a dedicated contract card + skeleton for this intent. */
+/** All 14 intents now ship a dedicated contract card + skeleton. */
 export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'none',
   'fade-up-stagger',
@@ -630,6 +670,7 @@ export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'horizontal-scroll-track',
   'sticky-card-stack',
   'count-up-stats',
+  'theme-shift',
   'pinned-step-sequence',
   'marquee-loop',
 ])
