@@ -1,4 +1,13 @@
-import type { AnimationIntentId, AnimationSpec, SectionCopy, SectionModule, ThemeTokens, SectionKind } from './schema'
+import type {
+  AnimationIntentId,
+  AnimationSpec,
+  PageBlueprint,
+  SectionCopy,
+  SectionModule,
+  SectionPlan,
+  ThemeTokens,
+  SectionKind,
+} from './schema'
 
 /* ============================================================================
  * Animation Vocabulary / Constraint Layer (AGENT_SPEC §4).
@@ -415,4 +424,248 @@ export function vocabularyTableCompact(): string {
         `- ${id} · ${INTENT_CATEGORY[id]} · ${paramSummary(INTENT_PARAMS[id])}`,
     )
     .join('\n')
+}
+
+/* ============================================================================
+ * Composition rules (AGENT_SPEC §4.6) + Planner post-processing (§6, §8 Phase 3).
+ *
+ * Order per §6 "Per-stage gate summary": parse → Zod → clamp params (F3) →
+ * composition rules R1–R7 auto-correct → unique-id check (dedupe). All of these
+ * are auto-CORRECTIONS, never rejections — every fix appends a warning.
+ * ========================================================================== */
+
+/** Hero-eligible entrance intents (R2). */
+const ENTRANCE_HERO_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
+  'fade-up-stagger',
+  'split-text-reveal',
+  'mask-wipe',
+  'scale-settle',
+])
+
+/** "Heavy" intents (R1): pin-based + sticky-card-stack + scrub-choreography. */
+const HEAVY_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
+  'horizontal-scroll-track',
+  'pinned-step-sequence',
+  'sticky-card-stack',
+  'scrub-choreography',
+])
+
+function isPacingIntent(intent: AnimationIntentId): boolean {
+  return intent === 'none' || intent === 'fade-up-stagger'
+}
+
+/** Rebuild a section's animation with a new intent, defaulted params (§4.3). */
+function withIntent(section: SectionPlan, intent: AnimationIntentId): SectionPlan {
+  const { params } = clampParams({ intent, params: {} })
+  return { ...section, animation: { ...section.animation, intent, params } }
+}
+
+/** Apply clampParams (§4.3, F3) to every section's animation params. */
+export function clampBlueprintParams(blueprint: PageBlueprint): {
+  blueprint: PageBlueprint
+  warnings: string[]
+} {
+  const warnings: string[] = []
+  const sections = blueprint.sections.map((s) => {
+    const { params, warnings: w } = clampParams(s.animation)
+    warnings.push(...w)
+    return { ...s, animation: { ...s.animation, params } }
+  })
+  return { blueprint: { ...blueprint, sections }, warnings }
+}
+
+function enforceHeavyLimit(
+  sections: SectionPlan[],
+  warnings: string[],
+): SectionPlan[] {
+  const out = sections.slice()
+  let pinSeen = false
+  let heavyCount = 0
+  let prevHeavy = false
+  for (let i = 0; i < out.length; i++) {
+    const s = out[i]
+    const intent = s.animation.intent
+    const isPin = PIN_INTENTS.has(intent)
+    const isHeavy = HEAVY_INTENTS.has(intent)
+    let reason = ''
+    if (isPin && pinSeen) reason = 'a second pinned intent is not allowed (R1)'
+    else if (isHeavy && heavyCount >= 2)
+      reason = 'more than two heavy sections is not allowed (R1)'
+    else if (isHeavy && prevHeavy)
+      reason = 'heavy sections cannot be adjacent (R1)'
+
+    if (reason) {
+      warnings.push(
+        `section "${s.id}": intent "${intent}" demoted to fade-up-stagger — ${reason}`,
+      )
+      out[i] = withIntent(s, 'fade-up-stagger')
+      prevHeavy = false
+      continue
+    }
+    if (isPin) pinSeen = true
+    prevHeavy = isHeavy
+    if (isHeavy) heavyCount++
+  }
+  return out
+}
+
+/** Generic "at most `max`, never adjacent" enforcement for a single intent. */
+function enforceSpacedLimit(
+  sections: SectionPlan[],
+  intent: AnimationIntentId,
+  max: number,
+  ruleTag: string,
+  warnings: string[],
+): SectionPlan[] {
+  const out = sections.slice()
+  let count = 0
+  let prevMatched = false
+  for (let i = 0; i < out.length; i++) {
+    const s = out[i]
+    if (s.animation.intent !== intent) {
+      prevMatched = false
+      continue
+    }
+    let reason = ''
+    if (count >= max)
+      reason = `more than ${max} "${intent}" section(s) is not allowed (${ruleTag})`
+    else if (prevMatched)
+      reason = `"${intent}" sections cannot be adjacent (${ruleTag})`
+
+    if (reason) {
+      warnings.push(
+        `section "${s.id}": intent "${intent}" demoted to fade-up-stagger — ${reason}`,
+      )
+      out[i] = withIntent(s, 'fade-up-stagger')
+      prevMatched = false
+    } else {
+      count++
+      prevMatched = true
+    }
+  }
+  return out
+}
+
+/** Loudness ranking used to pick R4 pacing-demotion candidates. */
+function loudnessRank(intent: AnimationIntentId): number {
+  if (isPacingIntent(intent)) return -1
+  if (HEAVY_INTENTS.has(intent) || PIN_INTENTS.has(intent)) return 3
+  const category = INTENT_CATEGORY[intent]
+  if (category === 'scroll-linked' || category === 'global') return 2
+  return 1
+}
+
+function enforcePacing(sections: SectionPlan[], warnings: string[]): SectionPlan[] {
+  const out = sections.slice()
+  const need = Math.ceil(out.length / 3)
+  let pacingCount = out.filter((s) => isPacingIntent(s.animation.intent)).length
+  if (pacingCount >= need) return out
+
+  const candidates = out
+    .map((s, i) => ({ i, rank: loudnessRank(s.animation.intent) }))
+    .filter((c) => c.rank >= 0)
+    .sort((a, b) => b.rank - a.rank)
+
+  for (const c of candidates) {
+    if (pacingCount >= need) break
+    const s = out[c.i]
+    warnings.push(
+      `section "${s.id}": intent "${s.animation.intent}" demoted to fade-up-stagger — pacing requires at least ${need} calm section(s) (R4)`,
+    )
+    out[c.i] = withIntent(s, 'fade-up-stagger')
+    pacingCount++
+  }
+  return out
+}
+
+/**
+ * Apply composition rules R1–R7 to an already-clamped blueprint. Never
+ * rejects — every violation is auto-corrected in place with a warning.
+ */
+export function applyCompositionRules(blueprint: PageBlueprint): {
+  blueprint: PageBlueprint
+  warnings: string[]
+} {
+  const warnings: string[] = []
+  let sections = blueprint.sections.slice()
+
+  // R7 (ordering) — hero first, footer last, if present.
+  const heroIdx = sections.findIndex((s) => s.kind === 'hero')
+  if (heroIdx > 0) {
+    const [hero] = sections.splice(heroIdx, 1)
+    sections.unshift(hero)
+    warnings.push(`section "${hero.id}": kind "hero" moved to the first position (R7)`)
+  }
+  const footerIdx = sections.findIndex((s) => s.kind === 'footer')
+  if (footerIdx !== -1 && footerIdx !== sections.length - 1) {
+    const [footer] = sections.splice(footerIdx, 1)
+    sections.push(footer)
+    warnings.push(`section "${footer.id}": kind "footer" moved to the last position (R7)`)
+  }
+
+  // R2 — hero uses an entrance intent only.
+  sections = sections.map((s) => {
+    if (s.kind === 'hero' && !ENTRANCE_HERO_INTENTS.has(s.animation.intent)) {
+      warnings.push(
+        `section "${s.id}" (hero): intent "${s.animation.intent}" is not an entrance intent — demoted to split-text-reveal (R2)`,
+      )
+      return withIntent(s, 'split-text-reveal')
+    }
+    return s
+  })
+
+  // R3 — footer: none | fade-up-stagger only.
+  sections = sections.map((s) => {
+    if (
+      s.kind === 'footer' &&
+      s.animation.intent !== 'none' &&
+      s.animation.intent !== 'fade-up-stagger'
+    ) {
+      warnings.push(
+        `section "${s.id}" (footer): intent "${s.animation.intent}" is not allowed on a footer — demoted to none (R3)`,
+      )
+      return withIntent(s, 'none')
+    }
+    return s
+  })
+
+  // R6 — count-up-stats only allowed on kind "stats".
+  sections = sections.map((s) => {
+    if (s.animation.intent === 'count-up-stats' && s.kind !== 'stats') {
+      warnings.push(
+        `section "${s.id}": count-up-stats only allowed on kind "stats" (got "${s.kind}") — demoted to fade-up-stagger (R6)`,
+      )
+      return withIntent(s, 'fade-up-stagger')
+    }
+    return s
+  })
+
+  // R1 — at most one pin intent; at most two heavy sections total, never adjacent.
+  sections = enforceHeavyLimit(sections, warnings)
+
+  // R5 — theme-shift at most twice, never adjacent.
+  sections = enforceSpacedLimit(sections, 'theme-shift', 2, 'R5', warnings)
+
+  // R4 — at least ceil(n/3) sections are pacing (none | fade-up-stagger).
+  sections = enforcePacing(sections, warnings)
+
+  return { blueprint: { ...blueprint, sections }, warnings }
+}
+
+/** Dedupe section ids by suffixing `-2`, `-3`, … (§6, run last). */
+export function dedupeSectionIds(blueprint: PageBlueprint): {
+  blueprint: PageBlueprint
+  warnings: string[]
+} {
+  const warnings: string[] = []
+  const seen = new Map<string, number>()
+  const sections = blueprint.sections.map((s) => {
+    const count = seen.get(s.id) ?? 0
+    seen.set(s.id, count + 1)
+    if (count === 0) return s
+    const newId = `${s.id}-${count + 1}`
+    warnings.push(`duplicate section id "${s.id}" renamed to "${newId}"`)
+    return { ...s, id: newId }
+  })
+  return { blueprint: { ...blueprint, sections }, warnings }
 }
