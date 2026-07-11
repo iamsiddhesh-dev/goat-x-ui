@@ -3,6 +3,7 @@ import type { SectionSkeletonFn } from '../vocabulary'
 import { noneSkeleton } from './none'
 import { fadeUpStaggerSkeleton } from './fade-up-stagger'
 import { splitTextRevealSkeleton } from './split-text-reveal'
+import { maskWipeSkeleton } from './mask-wipe'
 import { parallaxDriftSkeleton } from './parallax-drift'
 import { pinnedStepSequenceSkeleton } from './pinned-step-sequence'
 import { marqueeLoopSkeleton } from './marquee-loop'
@@ -11,14 +12,16 @@ import { marqueeLoopSkeleton } from './marquee-loop'
  * Fallback skeleton registry (AGENT_SPEC §4.5, §6 F5).
  *
  * The deterministic, known-good implementation of each intent. Used when
- * codegen fails twice (origin: 'fallback'). Phase 2 ships 6; the remaining 8
- * intents degrade to the fade-up-stagger skeleton, which is correct for any copy.
+ * codegen fails twice (origin: 'fallback'). Phase 5 is filling in the
+ * remaining intents one at a time; unimplemented ones still degrade to the
+ * fade-up-stagger skeleton, which is correct for any copy.
  * ========================================================================== */
 
 const SKELETONS: Partial<Record<AnimationIntentId, SectionSkeletonFn>> = {
   none: noneSkeleton,
   'fade-up-stagger': fadeUpStaggerSkeleton,
   'split-text-reveal': splitTextRevealSkeleton,
+  'mask-wipe': maskWipeSkeleton,
   'parallax-drift': parallaxDriftSkeleton,
   'pinned-step-sequence': pinnedStepSequenceSkeleton,
   'marquee-loop': marqueeLoopSkeleton,
@@ -33,6 +36,7 @@ export {
   noneSkeleton,
   fadeUpStaggerSkeleton,
   splitTextRevealSkeleton,
+  maskWipeSkeleton,
   parallaxDriftSkeleton,
   pinnedStepSequenceSkeleton,
   marqueeLoopSkeleton,

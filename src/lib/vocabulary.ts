@@ -21,10 +21,11 @@ import type {
  * contract cards injected into the codegen prompt (§4.5), and the mapping to the
  * deterministic fallback skeletons (skeletons/). It is pure and LLM-free.
  *
- * Phase 2 fully implements 6 intents (none, fade-up-stagger, split-text-reveal,
- * parallax-drift, pinned-step-sequence, marquee-loop). The remaining 8 have
- * param specs (so clampParams is TOTAL over all 14) and degrade to a generic
- * entrance card + skeleton until Phase 5 finishes their cards/skeletons.
+ * Phase 2 fully implemented 6 intents (none, fade-up-stagger, split-text-reveal,
+ * parallax-drift, pinned-step-sequence, marquee-loop); Phase 5 is filling in the
+ * remaining 8 one at a time (mask-wipe done). All 14 have param specs (so
+ * clampParams is TOTAL over all 14); unimplemented ones degrade to a generic
+ * entrance card + skeleton until their dedicated cards/skeletons land.
  * ========================================================================== */
 
 /* ---------- param specs ---------- */
@@ -224,6 +225,14 @@ export function clampParams(spec: AnimationSpec): {
  */
 export type ContractCard = (params: ClampedParams) => string
 
+/** The fully-hidden clip-path inset() for a mask-wipe direction (§4.2 #3). */
+export function maskWipeHiddenInset(direction: string): string {
+  if (direction === 'down') return 'inset(100% 0% 0% 0%)'
+  if (direction === 'left') return 'inset(0% 100% 0% 0%)'
+  if (direction === 'right') return 'inset(0% 0% 0% 100%)'
+  return 'inset(0% 0% 100% 0%)' // up (default)
+}
+
 const CARDS: Partial<Record<AnimationIntentId, ContractCard>> = {
   none: () => `## INTENT: none
 This section is static — NO JavaScript animation.
@@ -345,6 +354,36 @@ steps.forEach(function (step, i) {
 });
 \`\`\``,
 
+  'mask-wipe': (p) => `## INTENT: mask-wipe
+A media/panel element is revealed by an animated clip-path: inset() wipe as the section enters.
+Clamped params: direction=${p.direction}, duration=${p.duration}s.
+
+MECHANICS YOU MUST KEEP:
+- Pick one element to wipe (e.g. a class like '.panel'). In JS, set its FULLY
+  HIDDEN inset FIRST, before any ScrollTrigger fires (rule C9 — never in CSS):
+    gsap.set(panel, { clipPath: '${maskWipeHiddenInset(String(p.direction))}' }).
+- ONE ScrollTrigger with once: true, guarded for above-the-fold sections exactly
+  like fade-up-stagger:
+    var st = ScrollTrigger.create({ trigger: root, start: 'top 80%', once: true, onEnter: play });
+    if (st.isActive) { st.kill(); play(); }
+- play() tweens clipPath to the fully-revealed rect:
+    gsap.to(panel, { clipPath: 'inset(0% 0% 0% 0%)', duration: ${p.duration}, ease: 'power4.out' }).
+- clip-path is the ONLY property this intent animates. Never animate width/
+  height/top/left/right/bottom directly (banned tween properties, rule C2).
+
+YOURS TO INVENT:
+- What the wiped element IS (image placeholder, gradient panel, card) and the
+  surrounding layout/copy. Content must be readable with JS off (no CSS clip).
+
+REFERENCE SKELETON — mechanics example ONLY, do not copy the DOM/layout:
+\`\`\`js
+var panel = root.querySelector('.panel');
+gsap.set(panel, { clipPath: '${maskWipeHiddenInset(String(p.direction))}' });
+function play(){ gsap.to(panel, { clipPath: 'inset(0% 0% 0% 0%)', duration: ${p.duration}, ease: 'power4.out' }); }
+var st = ScrollTrigger.create({ trigger: root, start: 'top 80%', once: true, onEnter: play });
+if (st.isActive) { st.kill(); play(); }
+\`\`\``,
+
   'marquee-loop': (p) => `## INTENT: marquee-loop
 An infinite horizontal marquee (logos / keywords) drifting ${p.direction}.
 Clamped params: speedSec=${p.speedSec}, direction=${p.direction}.
@@ -388,6 +427,7 @@ export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'none',
   'fade-up-stagger',
   'split-text-reveal',
+  'mask-wipe',
   'parallax-drift',
   'pinned-step-sequence',
   'marquee-loop',

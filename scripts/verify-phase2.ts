@@ -76,6 +76,7 @@ const skeletonIntents: AnimationIntentId[] = [
   'none',
   'fade-up-stagger',
   'split-text-reveal',
+  'mask-wipe',
   'parallax-drift',
   'pinned-step-sequence',
   'marquee-loop',
@@ -228,10 +229,14 @@ console.log('\nEmitting offline preview (public/phase2-preview.html)')
   const heroGen = validateModule(goodRaw, { id: 'feature', intent: 'fade-up-stagger' })
   const heroMod = heroGen.module!
 
-  // Plus three fallback skeletons to exercise split / pinned / marquee visually.
+  // Plus fallback skeletons to exercise split / mask-wipe / pinned / marquee visually.
   const splitMod = skeletonFor('split-text-reveal')({
     id: 'intro', kind: 'showcase', copy: sampleCopy('intro'),
     theme, params: clampParams({ intent: 'split-text-reveal', params: {} }).params,
+  })
+  const maskMod = skeletonFor('mask-wipe')({
+    id: 'reveal', kind: 'showcase', copy: sampleCopy('reveal'),
+    theme, params: clampParams({ intent: 'mask-wipe', params: {} }).params,
   })
   const pinnedMod = skeletonFor('pinned-step-sequence')({
     id: 'steps', kind: 'process', copy: sampleCopy('steps'),
@@ -247,7 +252,7 @@ console.log('\nEmitting offline preview (public/phase2-preview.html)')
   const html = assemble({
     meta: { title: 'GOAT-X-UI — Phase 2 codegen', description: 'Generated + skeleton sections.' },
     theme,
-    sections: [heroMod, splitMod, pinnedMod, marqueeMod],
+    sections: [heroMod, splitMod, maskMod, pinnedMod, marqueeMod],
   })
   const offline = html
     .replace(/https:\/\/cdn\.jsdelivr\.net\/npm\/gsap@3\.13\.0\/dist\//g, '/vendor/')
