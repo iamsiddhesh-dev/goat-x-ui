@@ -6,6 +6,7 @@ import { splitTextRevealSkeleton } from './split-text-reveal'
 import { maskWipeSkeleton } from './mask-wipe'
 import { scaleSettleSkeleton } from './scale-settle'
 import { parallaxDriftSkeleton } from './parallax-drift'
+import { reverseParallaxSkeleton } from './reverse-parallax'
 import { pinnedStepSequenceSkeleton } from './pinned-step-sequence'
 import { marqueeLoopSkeleton } from './marquee-loop'
 
@@ -25,6 +26,7 @@ const SKELETONS: Partial<Record<AnimationIntentId, SectionSkeletonFn>> = {
   'mask-wipe': maskWipeSkeleton,
   'scale-settle': scaleSettleSkeleton,
   'parallax-drift': parallaxDriftSkeleton,
+  'reverse-parallax': reverseParallaxSkeleton,
   'pinned-step-sequence': pinnedStepSequenceSkeleton,
   'marquee-loop': marqueeLoopSkeleton,
 }
@@ -41,6 +43,7 @@ export {
   maskWipeSkeleton,
   scaleSettleSkeleton,
   parallaxDriftSkeleton,
+  reverseParallaxSkeleton,
   pinnedStepSequenceSkeleton,
   marqueeLoopSkeleton,
 }

@@ -321,6 +321,34 @@ layers.forEach(function (el, i) {
 });
 \`\`\``,
 
+  'reverse-parallax': (p) => `## INTENT: reverse-parallax
+Media drifts AGAINST the direction parallax-drift would use, while the text flows normally (no scroll-linked transform on text at all).
+Clamped params: intensity=${p.intensity}.
+
+MECHANICS YOU MUST KEEP:
+- Exactly ONE media/decorative element drifts (a class like '.media'). The text
+  block gets NO scrollTrigger, no transform — it must sit in plain normal flow.
+- ONE ScrollTrigger, ALWAYS scrubbed (ease 'none'):
+    { trigger: root, start: 'top bottom', end: 'bottom top', scrub: true }.
+- Drift is a yPercent tween only, POSITIVE (downward as the page scrolls down —
+  this is what makes it "reverse" of parallax-drift's upward drift):
+    gsap.to(media, { yPercent: +N, ease: 'none', scrollTrigger: {...} }).
+  Intensity '${p.intensity}' ≈ drift ${p.intensity === 'subtle' ? 8 : p.intensity === 'strong' ? 24 : 15}%.
+- Never pin. Never animate anything but yPercent/y (+ optional opacity) on the
+  media element.
+
+YOURS TO INVENT:
+- What the media element IS (image placeholder, gradient panel, decorative
+  shape) and its stacking relative to the static text. Content must be readable
+  with JS off (no layer starts offset in CSS).
+
+REFERENCE SKELETON — mechanics example ONLY:
+\`\`\`js
+var media = root.querySelector('.media');
+gsap.to(media, { yPercent: ${p.intensity === 'subtle' ? 8 : p.intensity === 'strong' ? 24 : 15}, ease: 'none',
+  scrollTrigger: { trigger: root, start: 'top bottom', end: 'bottom top', scrub: true } });
+\`\`\``,
+
   'pinned-step-sequence': (p) => `## INTENT: pinned-step-sequence
 Section pins to the viewport; ${p.steps} content "steps" hand off as the user scrolls.
 Clamped params: steps=${p.steps} (scrub smoothing fixed at 1).
@@ -459,6 +487,7 @@ export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'mask-wipe',
   'scale-settle',
   'parallax-drift',
+  'reverse-parallax',
   'pinned-step-sequence',
   'marquee-loop',
 ])
