@@ -77,6 +77,7 @@ const skeletonIntents: AnimationIntentId[] = [
   'fade-up-stagger',
   'split-text-reveal',
   'mask-wipe',
+  'scale-settle',
   'parallax-drift',
   'pinned-step-sequence',
   'marquee-loop',
@@ -238,6 +239,10 @@ console.log('\nEmitting offline preview (public/phase2-preview.html)')
     id: 'reveal', kind: 'showcase', copy: sampleCopy('reveal'),
     theme, params: clampParams({ intent: 'mask-wipe', params: {} }).params,
   })
+  const settleMod = skeletonFor('scale-settle')({
+    id: 'settle', kind: 'showcase', copy: sampleCopy('settle'),
+    theme, params: clampParams({ intent: 'scale-settle', params: {} }).params,
+  })
   const pinnedMod = skeletonFor('pinned-step-sequence')({
     id: 'steps', kind: 'process', copy: sampleCopy('steps'),
     theme, params: clampParams({ intent: 'pinned-step-sequence', params: {} }).params,
@@ -252,7 +257,7 @@ console.log('\nEmitting offline preview (public/phase2-preview.html)')
   const html = assemble({
     meta: { title: 'GOAT-X-UI — Phase 2 codegen', description: 'Generated + skeleton sections.' },
     theme,
-    sections: [heroMod, splitMod, maskMod, pinnedMod, marqueeMod],
+    sections: [heroMod, splitMod, maskMod, settleMod, pinnedMod, marqueeMod],
   })
   const offline = html
     .replace(/https:\/\/cdn\.jsdelivr\.net\/npm\/gsap@3\.13\.0\/dist\//g, '/vendor/')

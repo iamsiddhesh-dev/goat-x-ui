@@ -354,6 +354,35 @@ steps.forEach(function (step, i) {
 });
 \`\`\``,
 
+  'scale-settle': (p) => `## INTENT: scale-settle
+An element settles from scale=${p.from} down to scale 1 with a fade, when the section enters.
+Clamped params: from=${p.from}, duration=${p.duration}s.
+
+MECHANICS YOU MUST KEEP:
+- Pick ONE element to settle (e.g. the whole content group, or a media panel — a
+  class like '.settle'). In JS, set its oversized+hidden state FIRST (rule C9):
+    gsap.set(el, { scale: ${p.from}, autoAlpha: 0 }).
+- ONE ScrollTrigger with once: true, guarded exactly like fade-up-stagger (a hero
+  can already be on-screen at load):
+    var st = ScrollTrigger.create({ trigger: root, start: 'top 80%', once: true, onEnter: play });
+    if (st.isActive) { st.kill(); play(); }
+- play() = gsap.to(el, { scale: 1, autoAlpha: 1, duration: ${p.duration}, ease: 'power3.out' }).
+- Only ONE element scales — do not stagger multiple independently-scaling
+  children (that is fade-up-stagger's job, not this intent's).
+
+YOURS TO INVENT:
+- What settles (a hero visual, a single card, the whole copy block) and the
+  surrounding layout. Content must be readable with JS off (no CSS transform).
+
+REFERENCE SKELETON — mechanics example ONLY, do not copy the DOM/layout:
+\`\`\`js
+var el = root.querySelector('.settle');
+gsap.set(el, { scale: ${p.from}, autoAlpha: 0 });
+function play(){ gsap.to(el, { scale: 1, autoAlpha: 1, duration: ${p.duration}, ease: 'power3.out' }); }
+var st = ScrollTrigger.create({ trigger: root, start: 'top 80%', once: true, onEnter: play });
+if (st.isActive) { st.kill(); play(); }
+\`\`\``,
+
   'mask-wipe': (p) => `## INTENT: mask-wipe
 A media/panel element is revealed by an animated clip-path: inset() wipe as the section enters.
 Clamped params: direction=${p.direction}, duration=${p.duration}s.
@@ -428,6 +457,7 @@ export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'fade-up-stagger',
   'split-text-reveal',
   'mask-wipe',
+  'scale-settle',
   'parallax-drift',
   'pinned-step-sequence',
   'marquee-loop',
