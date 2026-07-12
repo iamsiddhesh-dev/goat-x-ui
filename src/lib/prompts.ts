@@ -128,8 +128,9 @@ ${vocabularyTableCompact()}
 
 == COMPOSITION RULES ==
 - 4 to 7 sections. First section kind: "hero". Last: "footer" or "cta".
-- At most ONE pinned intent (horizontal-scroll-track | pinned-step-sequence) per page.
-  Place it mid-page on the section with the most showable content.
+- At most ONE pinned intent (horizontal-scroll-track | pinned-step-sequence |
+  reverse-scroll-reveal) per page. Place it mid-page on the section with the
+  most showable content.
 - Heavy sections (pinned, sticky-card-stack, scrub-choreography): max 2, never adjacent.
 - Hero uses an entrance intent (split-text-reveal, fade-up-stagger, mask-wipe, scale-settle).
 - At least a third of sections use "none" or "fade-up-stagger" — pacing beats spectacle.

@@ -68,6 +68,7 @@ export const AnimationIntentId = z.enum([
   'marquee-loop',
   'count-up-stats',
   'theme-shift',
+  'reverse-scroll-reveal',
 ])
 export type AnimationIntentId = z.infer<typeof AnimationIntentId>
 

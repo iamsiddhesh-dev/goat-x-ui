@@ -385,8 +385,9 @@ Legend — **Scroll:** `once` = play on enter · `scrub` = tied to scroll positi
 | 11 | `marquee-loop` | ambient | ambient | Infinite horizontal marquee (logos, keywords) | `speedSec`: 15–40 · 24 · `direction`: left\|right · left |
 | 12 | `count-up-stats` | entrance | once | Numbers count up with snap on enter | `duration`: 1–2s · 1.4 |
 | 13 | `theme-shift` | global | once (toggle) | Page background crossfades to a different token color while this section is in view (reverses on leave-back) | `bg`: 'surface'\|'accent'\|hex · surface |
+| 14 | `reverse-scroll-reveal` | pinned | pin+scrub | Section pins; a "cover" panel parked above the viewport slides DOWN over the resting base content — inverted from the usual "next content rises from below" feel. Scrolling back retracts it for free (Phase 6 addition, modeled on mayaresearch.ai's scroll-hijack pattern) | `intensity`: subtle\|medium\|strong · medium |
 
-Fourteen intents is deliberate: small enough to write a contract card + reference skeleton for each (a bounded, finishable task), large enough that a 6-section page has real combinatorial variety (≈10⁶ intent-assignments before params and layout even enter).
+Fifteen intents is deliberate: small enough to write a contract card + reference skeleton for each (a bounded, finishable task), large enough that a 6-section page has real combinatorial variety (≈10⁶ intent-assignments before params and layout even enter).
 
 ### 4.3 Per-intent param clamping
 
@@ -463,13 +464,13 @@ steps.forEach((step, i) => {
 ```
 ````
 
-The same skeleton function, executed deterministically with the section's real copy and theme, doubles as the **fallback module** when generation fails twice (Section 6, F5). Writing 14 cards + 14 skeletons is the bulk of Phase 1–2 work and is exactly where the "known-good patterns" live.
+The same skeleton function, executed deterministically with the section's real copy and theme, doubles as the **fallback module** when generation fails twice (Section 6, F5). Writing 15 cards + 15 skeletons is the bulk of Phase 1–2 (+ Phase 6) work and is exactly where the "known-good patterns" live.
 
 ### 4.6 Composition rules (page-level, enforced on the Blueprint)
 
 Checked (and auto-corrected, with warnings) right after the Planner stage:
 
-- **R1** — At most **one** pin-based section per page (`horizontal-scroll-track`, `pinned-step-sequence`). At most **two** "heavy" sections total (pin-based + `sticky-card-stack` + `scrub-choreography`), and never adjacent. *Correction: demote extras to `fade-up-stagger`, keeping the earliest.*
+- **R1** — At most **one** pin-based section per page (`horizontal-scroll-track`, `pinned-step-sequence`, `reverse-scroll-reveal`). At most **two** "heavy" sections total (pin-based + `sticky-card-stack` + `scrub-choreography`), and never adjacent. *Correction: demote extras to `fade-up-stagger`, keeping the earliest.*
 - **R2** — Hero: entrance-category intents only (1–4). *Correction: demote to `split-text-reveal`.*
 - **R3** — Footer: `none` or `fade-up-stagger` only.
 - **R4** — At least ⌈n/3⌉ sections use `none` or `fade-up-stagger` — pacing; a page where everything shouts reads as junk. *Correction: demote lowest-priority offenders.*
@@ -778,6 +779,8 @@ Plain React state (or a small zustand store) holding `PipelineState`. `generate(
 **Phase 4 — Full pipeline + UI.** Client orchestrator, parallel fan-out, progress chips, warning badges, per-section regenerate, srcdoc preview swap. Exit criteria: prompt → live animated page in <45 s; killing one section's network call still yields a complete page (fallback badge shown).
 
 **Phase 5 — Export + polish.** HTML download, remaining 8 intents' cards/skeletons, prompt-quality passes (tune temperatures, tighten few-shots based on observed failures), mobile check of generated pages at 375px.
+
+**Phase 6 — New intent: `reverse-scroll-reveal`.** Added on request after a live prompt ("scroll reverse") produced a normal page because no intent in the closed vocabulary modeled a global scroll-direction inversion. Investigated mayaresearch.ai's actual mechanism (hand-rolled scroll-hijack: a fixed stage + a content wrapper parked above the viewport that translates down as you scroll) and mapped it into a single-section-scoped pin intent so it fits the existing per-section contract (trigger/pin: root only, never cross-section). Exit criteria: intent registered in schema/vocabulary/skeletons, passes the same validator gates as the other 14, composition rule R1 treats it as pin+heavy.
 
 ---
 

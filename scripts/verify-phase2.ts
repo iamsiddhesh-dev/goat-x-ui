@@ -87,6 +87,7 @@ const skeletonIntents: AnimationIntentId[] = [
   'theme-shift',
   'pinned-step-sequence',
   'marquee-loop',
+  'reverse-scroll-reveal',
 ]
 for (const intent of skeletonIntents) {
   const id = intent === 'marquee-loop' ? 'logos' : 'demo'

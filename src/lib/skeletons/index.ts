@@ -14,6 +14,7 @@ import { countUpStatsSkeleton } from './count-up-stats'
 import { themeShiftSkeleton } from './theme-shift'
 import { pinnedStepSequenceSkeleton } from './pinned-step-sequence'
 import { marqueeLoopSkeleton } from './marquee-loop'
+import { reverseScrollRevealSkeleton } from './reverse-scroll-reveal'
 
 /* ============================================================================
  * Fallback skeleton registry (AGENT_SPEC §4.5, §6 F5).
@@ -39,6 +40,7 @@ const SKELETONS: Partial<Record<AnimationIntentId, SectionSkeletonFn>> = {
   'theme-shift': themeShiftSkeleton,
   'pinned-step-sequence': pinnedStepSequenceSkeleton,
   'marquee-loop': marqueeLoopSkeleton,
+  'reverse-scroll-reveal': reverseScrollRevealSkeleton,
 }
 
 /** The fallback skeleton for an intent (fade-up-stagger for the unimplemented). */
@@ -61,4 +63,5 @@ export {
   themeShiftSkeleton,
   pinnedStepSequenceSkeleton,
   marqueeLoopSkeleton,
+  reverseScrollRevealSkeleton,
 }
