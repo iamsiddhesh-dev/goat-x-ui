@@ -288,7 +288,7 @@ console.log('\nEmitting offline preview (public/phase2-preview.html)')
   })
 
   const html = assemble({
-    meta: { title: 'GOAT-X-UI — Phase 2 codegen', description: 'Generated + skeleton sections.' },
+    meta: { title: 'Vibely — Phase 2 codegen', description: 'Generated + skeleton sections.' },
     theme,
     sections: [heroMod, splitMod, maskMod, settleMod, reverseMod, choreoMod, trackMod, stackMod, statsMod, shiftMod, pinnedMod, marqueeMod],
   })

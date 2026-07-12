@@ -1,6 +1,6 @@
-# GOAT-X-UI — Project Documentation
+# Vibely — Project Documentation
 
-This folder is the **learning + revision archive** for GOAT-X-UI: an AI agent
+This folder is the **learning + revision archive** for Vibely: an AI agent
 that generates premium, animation-heavy landing pages from a single text prompt.
 
 It is written to be read **months from now, cold**. It does not assume you

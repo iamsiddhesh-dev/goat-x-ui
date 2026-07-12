@@ -83,7 +83,7 @@ function Phase1Harness() {
         }}
       >
         <header>
-          <h1 style={{ fontSize: 18, margin: 0 }}>GOAT-X-UI</h1>
+          <h1 style={{ fontSize: 18, margin: 0 }}>Vibely</h1>
           <p style={{ color: 'var(--app-muted)', margin: '4px 0 0' }}>
             Phase 1 — runtime harness verification
           </p>

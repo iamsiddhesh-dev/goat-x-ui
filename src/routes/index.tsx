@@ -58,7 +58,7 @@ function Generator() {
         }}
       >
         <header>
-          <h1 style={{ fontSize: 18, margin: 0 }}>GOAT-X-UI</h1>
+          <h1 style={{ fontSize: 18, margin: 0 }}>Vibely</h1>
           <p style={{ color: 'var(--app-muted)', margin: '4px 0 0' }}>
             Describe a landing page. The agent plans, writes copy, and
             generates each section's animation in parallel.

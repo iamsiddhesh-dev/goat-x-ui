@@ -1,4 +1,4 @@
-# GOAT-X-UI — Agent System Spec
+# Vibely — Agent System Spec
 
 **What this is:** Implementation spec for an AI agent that generates premium, animation-heavy landing pages (GSAP ScrollTrigger + Lenis) from a text prompt. No pre-built section templates — the agent writes real animation code per request, constrained by a controlled animation vocabulary.
 

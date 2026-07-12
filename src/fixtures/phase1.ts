@@ -32,7 +32,7 @@ export const theme: ThemeTokens = {
 }
 
 export const meta = {
-  title: 'GOAT-X-UI — Phase 1 harness',
+  title: 'Vibely — Phase 1 harness',
   description: 'Hand-written section modules in the fixed GSAP + Lenis runtime harness.',
 }
 
