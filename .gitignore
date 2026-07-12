@@ -11,3 +11,7 @@ src/routeTree.gen.ts
 public/preview-test*.html
 public/phase2-preview.html
 public/vendor/
+
+# Personal documentation notes (only README.md is tracked)
+documentation/*
+!documentation/README.md
