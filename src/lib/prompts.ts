@@ -90,6 +90,9 @@ ${card}
 8. CSS must NOT hide anything (no opacity:0 / visibility:hidden). ALL initial
    hidden/offset states are set in JS via gsap.set() at the top of your function
    — the page must be fully readable if your JS never runs.
+   WRONG: \`.reveal{opacity:0}\` in the CSS block.
+   RIGHT: no opacity/visibility rule for \`.reveal\` in CSS at all; instead, the
+   first line of your JS does \`gsap.set(els, { autoAlpha: 0, ... })\`.
 9. Budget: HTML <= 120 lines, CSS <= 120 lines, JS <= 80 lines — these are hard
    caps enforced by the linter, so aim comfortably under them (~80/90/50) rather
    than writing right up to the limit.
