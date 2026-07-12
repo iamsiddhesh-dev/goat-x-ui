@@ -123,6 +123,13 @@ export const INTENT_PARAMS: Record<AnimationIntentId, Record<string, ParamDef>> 
         allowHex: true,
       },
     },
+    'reverse-scroll-reveal': {
+      intensity: {
+        kind: 'enum',
+        values: ['subtle', 'medium', 'strong'],
+        default: 'medium',
+      },
+    },
   }
 
 /** Category per intent (used by composition rules §4.6 + the validator). */
@@ -141,12 +148,14 @@ export const INTENT_CATEGORY: Record<AnimationIntentId, IntentCategory> = {
   'marquee-loop': 'ambient',
   'count-up-stats': 'entrance',
   'theme-shift': 'global',
+  'reverse-scroll-reveal': 'pinned',
 }
 
 /** Intents that own a GSAP pin — only these may write `pin: root` (rule C4). */
 export const PIN_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'horizontal-scroll-track',
   'pinned-step-sequence',
+  'reverse-scroll-reveal',
 ])
 
 export function isPinIntent(id: AnimationIntentId): boolean {
@@ -620,6 +629,50 @@ var st = ScrollTrigger.create({ trigger: root, start: 'top 80%', once: true, onE
 if (st.isActive) { st.kill(); play(); }
 \`\`\``,
 
+  'reverse-scroll-reveal': (p) => `## INTENT: reverse-scroll-reveal
+Section pins to the viewport. A "cover" panel starts parked ABOVE the viewport and
+slides DOWN over the resting base content as the user scrolls — inverted from the
+usual "new content rises up from below" feel (this is the deliberate "reverse
+scroll" signature move). Because it's a scrubbed pin, scrolling back up naturally
+retracts the cover upward — the reversal is free, not a special case.
+Clamped params: intensity=${p.intensity} (how far the base recedes as it's covered).
+
+MECHANICS YOU MUST KEEP (load-bearing ScrollTrigger shape):
+- ONE ScrollTrigger: { trigger: root, pin: root, scrub: 1, anticipatePin: 1,
+  start: 'top top', end: '+=100%' }.
+- Exactly two layers, both direct children of a relatively-positioned '.stage':
+  '.base' (always in normal flow) and '.cover' (position: absolute; inset: 0),
+  '.cover' sits ABOVE '.base' in paint order (later in the DOM, or explicit z-index).
+- Set the cover's parked-above state in JS FIRST, before any ScrollTrigger fires
+  (rule C9): gsap.set(cover, { yPercent: -100 }).
+- ONE tween drives the whole reveal, ease 'none' (scrub supplies the easing):
+  gsap.to(cover, { yPercent: 0, ease: 'none', scrollTrigger: {...} }). Optionally
+  recede the base slightly for depth (autoAlpha down to ${p.intensity === 'subtle' ? 0.85 : p.intensity === 'strong' ? 0.5 : 0.7}
+  and/or scale down to ${p.intensity === 'subtle' ? 0.97 : p.intensity === 'strong' ? 0.88 : 0.93}, same timeline, same trigger).
+- The absolute-stack layout (cover on top of base) must be opted into from JS (add
+  a class to '.stage' in JS), so with JS off, base and cover just flow vertically
+  as a readable stack — cover reads as the next block of content, not "missing".
+
+YOURS TO INVENT (do not copy the reference layout):
+- What "base" and "cover" ARE for this content (e.g. base = current claim, cover =
+  the payoff/proof; or base = problem, cover = solution). Layout inside each layer,
+  any progress cue. transform/opacity only — never width/height/top/left.
+
+REFERENCE SKELETON — mechanics example ONLY, copying its DOM/layout is a failure:
+\`\`\`js
+var stage = root.querySelector('.stage');
+var base = root.querySelector('.base');
+var cover = root.querySelector('.cover');
+stage.classList.add('is-animated');
+gsap.set(cover, { yPercent: -100 });
+var tl = gsap.timeline({
+  scrollTrigger: { trigger: root, pin: root, scrub: 1, anticipatePin: 1,
+    start: 'top top', end: '+=100%' }
+});
+tl.to(cover, { yPercent: 0, ease: 'none' }, 0)
+  .to(base, { autoAlpha: ${p.intensity === 'subtle' ? 0.85 : p.intensity === 'strong' ? 0.5 : 0.7}, scale: ${p.intensity === 'subtle' ? 0.97 : p.intensity === 'strong' ? 0.88 : 0.93}, ease: 'none' }, 0);
+\`\`\``,
+
   'marquee-loop': (p) => `## INTENT: marquee-loop
 An infinite horizontal marquee (logos / keywords) drifting ${p.direction}.
 Clamped params: speedSec=${p.speedSec}, direction=${p.direction}.
@@ -658,7 +711,7 @@ export function contractCardFor(
   return card(params)
 }
 
-/** All 14 intents now ship a dedicated contract card + skeleton. */
+/** All 15 intents now ship a dedicated contract card + skeleton. */
 export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'none',
   'fade-up-stagger',
@@ -674,6 +727,7 @@ export const IMPLEMENTED_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'theme-shift',
   'pinned-step-sequence',
   'marquee-loop',
+  'reverse-scroll-reveal',
 ])
 
 /* ---------- fallback skeletons (§4.5) ---------- */
@@ -729,6 +783,7 @@ const ENTRANCE_HERO_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
 const HEAVY_INTENTS: ReadonlySet<AnimationIntentId> = new Set([
   'horizontal-scroll-track',
   'pinned-step-sequence',
+  'reverse-scroll-reveal',
   'sticky-card-stack',
   'scrub-choreography',
 ])
